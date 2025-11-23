@@ -1,0 +1,111 @@
+ CallCenter AI has been deployed successfully!
+
+Your release is named: {{ .Release.Name }}
+Deployed in namespace: {{ .Release.Namespace }}
+
+ DEPLOYED COMPONENTS:
+
+{{- if .Values.agentService.enabled }}
+ Agent Service ({{ .Values.agentService.replicaCount }} replicas)
+{{- end }}
+{{- if .Values.tfidfService.enabled }}
+ TF-IDF Service ({{ .Values.tfidfService.replicaCount }} replicas)
+{{- end }}
+{{- if .Values.transformerService.enabled }}
+ Transformer Service ({{ .Values.transformerService.replicaCount }} replicas)
+{{- end }}
+{{- if .Values.mlflow.enabled }}
+ MLflow
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+PostgreSQL
+{{- end }}
+{{- if .Values.redis.enabled }}
+ Redis
+{{- end }}
+{{- if .Values.prometheus.enabled }}
+ Prometheus
+{{- end }}
+{{- if .Values.grafana.enabled }}
+ Grafana
+{{- end }}
+
+ ACCESS YOUR SERVICES:
+
+{{- if .Values.ingress.enabled }}
+Ingress is enabled. Access your services via:
+
+{{- range .Values.ingress.hosts }}
+  {{- range .paths }}
+  {{ if eq .service "agent-service" }}🔹 Agent API: https://{{ $.Values.ingress.hosts | first | get "host" }}{{ .path }}
+  {{- else if eq .service "mlflow" }}🔹 MLflow: https://{{ $.Values.ingress.hosts | first | get "host" }}{{ .path }}
+  {{- else if eq .service "grafana" }}🔹 Grafana: https://{{ $.Values.ingress.hosts | first | get "host" }}{{ .path }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- else }}
+
+To access services locally, use port-forwarding:
+
+# Agent Service
+kubectl port-forward -n {{ .Release.Namespace }} svc/agent-service 8000:8000
+
+# MLflow
+kubectl port-forward -n {{ .Release.Namespace }} svc/mlflow 5000:5000
+
+# Grafana
+kubectl port-forward -n {{ .Release.Namespace }} svc/grafana 3000:3000
+
+# Prometheus
+kubectl port-forward -n {{ .Release.Namespace }} svc/prometheus 9090:9090
+
+Then access:
+- Agent API: http://localhost:8000
+- MLflow: http://localhost:5000
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+{{- end }}
+
+ MONITORING:
+
+Get pod status:
+  kubectl get pods -n {{ .Release.Namespace }}
+
+View logs:
+  kubectl logs -f -l app=callcenter-ai,component=agent-service -n {{ .Release.Namespace }}
+
+Check HPA status:
+  kubectl get hpa -n {{ .Release.Namespace }}
+
+ CREDENTIALS:
+
+{{- if .Values.grafana.enabled }}
+Grafana:
+  Username: {{ .Values.grafana.adminUser }}
+  Password: Get with: kubectl get secret {{ .Release.Name }}-grafana -n {{ .Release.Namespace }} -o jsonpath="{.data.admin-password}" | base64 -d
+{{- end }}
+
+{{- if .Values.postgresql.enabled }}
+PostgreSQL:
+  Username: {{ .Values.postgresql.auth.username }}
+  Password: kubectl get secret {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }} -o jsonpath="{.data.postgres-password}" | base64 -d
+{{- end }}
+
+ USEFUL COMMANDS:
+
+# Upgrade the release
+helm upgrade {{ .Release.Name }} callcenter-ai --namespace {{ .Release.Namespace }}
+
+# Check release history
+helm history {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+# Rollback to previous version
+helm rollback {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+# Uninstall the release
+helm uninstall {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+For more information, visit: https://github.com/your-org/MLOps-CallCenterAI
+
+Happy deploying!

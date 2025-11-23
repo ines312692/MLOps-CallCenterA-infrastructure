@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: callcenter-dev
+
+bases:
+  - ../../base
+
+namePrefix: dev-
+
+commonLabels:
+  environment: development
+
+replicas:
+  - name: agent-service
+    count: 1
+  - name: tfidf-service
+    count: 1
+  - name: transformer-service
+    count: 1
+
+images:
+  - name: agent-service
+    newName: your-registry/agent-service
+    newTag: dev-latest
+  - name: tfidf-service
+    newName: your-registry/tfidf-service
+    newTag: dev-latest
+  - name: transformer-service
+    newName: your-registry/transformer-service
+    newTag: dev-latest
+
+configMapGenerator:
+  - name: app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=DEBUG
+      - GROQ_MODEL=llama-3.1-8b-instant
+      - GROQ_TEMPERATURE=0.2
+
+patchesStrategicMerge:
+  - resources-patch.yaml
+  - ingress-patch.yaml
+
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: agent-service
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"

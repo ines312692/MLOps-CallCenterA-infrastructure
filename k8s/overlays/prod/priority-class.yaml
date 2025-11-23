@@ -1,0 +1,56 @@
+---
+# High Priority Class for critical services
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000
+globalDefault: false
+description: "High priority class for critical call center AI services"
+---
+# Medium Priority Class for supporting services
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: medium-priority
+value: 500
+globalDefault: false
+description: "Medium priority class for supporting services"
+---
+# Apply high priority to critical deployments
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-service
+spec:
+  template:
+    spec:
+      priorityClassName: high-priority
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tfidf-service
+spec:
+  template:
+    spec:
+      priorityClassName: high-priority
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformer-service
+spec:
+  template:
+    spec:
+      priorityClassName: high-priority
+---
+# Apply medium priority to supporting services
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+spec:
+  template:
+    spec:
+      priorityClassName: medium-priority

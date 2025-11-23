@@ -1,0 +1,85 @@
+# Development environment overrides
+agentService:
+  replicaCount: 1
+  image:
+    tag: "dev-latest"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+  env:
+    LOG_LEVEL: DEBUG
+    GROQ_TEMPERATURE: "0.2"
+
+tfidfService:
+  replicaCount: 1
+  image:
+    tag: "dev-latest"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+
+transformerService:
+  replicaCount: 1
+  image:
+    tag: "dev-latest"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  autoscaling:
+    enabled: false
+
+prometheus:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  persistence:
+    size: 10Gi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  hosts:
+    - host: dev-api.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: agent-service
+    - host: dev-mlflow.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: mlflow
+    - host: dev-grafana.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: grafana
+  tls:
+    - secretName: dev-callcenter-ai-tls
+      hosts:
+        - dev-api.callcenter-ai.example.com
+        - dev-mlflow.callcenter-ai.example.com
+        - dev-grafana.callcenter-ai.example.com
+
+podDisruptionBudget:
+  enabled: false

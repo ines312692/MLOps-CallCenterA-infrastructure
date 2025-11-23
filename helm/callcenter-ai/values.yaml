@@ -1,0 +1,278 @@
+# Default values for callcenter-ai
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "standard"
+
+# Agent Service Configuration
+agentService:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: your-registry/agent-service
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 8000
+    metricsPort: 8003
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    LOG_LEVEL: INFO
+    GROQ_MODEL: llama-3.1-8b-instant
+    GROQ_TEMPERATURE: "0.1"
+    GROQ_MAX_TOKENS: "1000"
+    MAX_AGENT_ITERATIONS: "5"
+    AGENT_TIMEOUT: "30"
+  secrets:
+    groqApiKey: ""  # Set via values override or external secrets
+
+# TF-IDF Service Configuration
+tfidfService:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: your-registry/tfidf-service
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 8001
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  persistence:
+    enabled: true
+    models:
+      size: 2Gi
+    data:
+      size: 5Gi
+
+# Transformer Service Configuration
+transformerService:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: your-registry/transformer-service
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 8002
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  persistence:
+    enabled: true
+    models:
+      size: 5Gi
+    data:
+      size: 5Gi
+    huggingfaceCache:
+      size: 10Gi
+
+# MLflow Configuration
+mlflow:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/mlflow/mlflow
+    pullPolicy: IfNotPresent
+    tag: "v2.9.2"
+  service:
+    type: ClusterIP
+    port: 5000
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 20Gi
+
+# PostgreSQL Configuration (for MLflow backend)
+postgresql:
+  enabled: true
+  auth:
+    username: mlflow
+    password: ""  # Set via values override
+    database: mlflow
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+# Redis Configuration
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# Prometheus Configuration
+prometheus:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: prom/prometheus
+    pullPolicy: IfNotPresent
+    tag: "v2.48.0"
+  service:
+    type: ClusterIP
+    port: 9090
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 50Gi
+  retention:
+    time: 30d
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: grafana/grafana
+    pullPolicy: IfNotPresent
+    tag: "10.2.2"
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+  adminUser: admin
+  adminPassword: ""  # Set via values override
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: api.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: agent-service
+    - host: mlflow.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: mlflow
+    - host: grafana.callcenter-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: grafana
+  tls:
+    - secretName: callcenter-ai-tls
+      hosts:
+        - api.callcenter-ai.example.com
+        - mlflow.callcenter-ai.example.com
+        - grafana.callcenter-ai.example.com
+
+# Network Policies
+networkPolicies:
+  enabled: true
+
+# Pod Disruption Budgets
+podDisruptionBudget:
+  enabled: true
+  agentService:
+    minAvailable: 1
+  tfidfService:
+    minAvailable: 2
+  transformerService:
+    minAvailable: 1
+
+# Service Accounts
+serviceAccount:
+  create: true
+  annotations: {}
+
+# Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Node Selection
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

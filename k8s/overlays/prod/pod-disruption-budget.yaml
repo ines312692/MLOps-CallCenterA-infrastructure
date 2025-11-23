@@ -1,0 +1,45 @@
+---
+# Pod Disruption Budget for Agent Service
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-service-pdb
+  labels:
+    app: callcenter-ai
+    component: agent-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: callcenter-ai
+      component: agent-service
+---
+# Pod Disruption Budget for TF-IDF Service
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tfidf-service-pdb
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: callcenter-ai
+      component: tfidf-service
+---
+# Pod Disruption Budget for Transformer Service
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: transformer-service-pdb
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: callcenter-ai
+      component: transformer-service
