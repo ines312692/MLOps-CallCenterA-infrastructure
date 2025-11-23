@@ -1,0 +1,52 @@
+---
+# Reduce resources for development environment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tfidf-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: tfidf-service
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformer-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: transformer-service
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  template:
+    spec:
+      containers:
+        - name: prometheus
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

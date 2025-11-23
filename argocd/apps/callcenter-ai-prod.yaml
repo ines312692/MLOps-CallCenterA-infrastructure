@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: callcenter-ai-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    environment: production
+    app: callcenter-ai
+spec:
+  project: callcenter-ai
+
+  source:
+    repoURL: https://github.com/your-org/MLOps-CallCenterAI.git
+    targetRevision: main
+    path: infrastructure/k8s/overlays/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: callcenter-prod
+
+  syncPolicy:
+    # Manual sync for production
+    automated: null
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+  # Notification settings
+  info:
+    - name: 'Environment'
+      value: 'Production'
+    - name: 'Contact'
+      value: 'devops@example.com'
+    - name: 'Approval Required'
+      value: 'Yes'
