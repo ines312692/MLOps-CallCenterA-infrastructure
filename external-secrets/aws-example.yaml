@@ -1,0 +1,71 @@
+---
+# SecretStore for AWS Secrets Manager
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: aws-secrets-manager
+  namespace: callcenter-prod
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: external-secrets-sa
+---
+# ExternalSecret for Groq API Key
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: groq-api-key
+  namespace: callcenter-prod
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: groq-api-key
+    creationPolicy: Owner
+  data:
+  - secretKey: GROQ_API_KEY
+    remoteRef:
+      key: callcenter-ai/prod/groq-api-key
+---
+# ExternalSecret for PostgreSQL Credentials
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-credentials
+  namespace: callcenter-prod
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: postgres-credentials
+    creationPolicy: Owner
+  dataFrom:
+  - extract:
+      key: callcenter-ai/prod/postgres
+---
+# ExternalSecret for Grafana Credentials
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: grafana-credentials
+  namespace: callcenter-prod
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: grafana-credentials
+    creationPolicy: Owner
+  dataFrom:
+  - extract:
+      key: callcenter-ai/prod/grafana

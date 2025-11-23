@@ -1,0 +1,125 @@
+# Production environment overrides
+agentService:
+  replicaCount: 3
+  image:
+    tag: "v1.0.0"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+  env:
+    LOG_LEVEL: INFO
+    MAX_AGENT_ITERATIONS: "10"
+    AGENT_TIMEOUT: "60"
+
+tfidfService:
+  replicaCount: 5
+  image:
+    tag: "v1.0.0"
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 30
+
+transformerService:
+  replicaCount: 3
+  image:
+    tag: "v1.0.0"
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 2000m
+      memory: 4Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+
+prometheus:
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  persistence:
+    size: 100Gi
+  retention:
+    time: 60d
+
+grafana:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "200"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+  hosts:
+    - host: api.callcenter-ai.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: agent-service
+    - host: mlflow.callcenter-ai.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: mlflow
+    - host: grafana.callcenter-ai.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: grafana
+  tls:
+    - secretName: prod-callcenter-ai-tls
+      hosts:
+        - api.callcenter-ai.com
+        - mlflow.callcenter-ai.com
+        - grafana.callcenter-ai.com
+
+podDisruptionBudget:
+  enabled: true
+  agentService:
+    minAvailable: 2
+  tfidfService:
+    minAvailable: 3
+  transformerService:
+    minAvailable: 2
+
+# Pod anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - callcenter-ai
+          topologyKey: kubernetes.io/hostname

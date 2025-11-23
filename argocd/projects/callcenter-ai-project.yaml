@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: callcenter-ai
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: MLOps CallCenter AI Project
+
+  # Allow manifests to deploy from any Git repos
+  sourceRepos:
+    - 'https://github.com/your-org/MLOps-CallCenterAI.git'
+    - 'https://charts.bitnami.com/bitnami'
+
+  # Allowed destinations
+  destinations:
+    - namespace: callcenter-dev
+      server: https://kubernetes.default.svc
+    - namespace: callcenter-staging
+      server: https://kubernetes.default.svc
+    - namespace: callcenter-prod
+      server: https://kubernetes.default.svc
+    - namespace: callcenter-monitoring
+      server: https://kubernetes.default.svc
+
+  # Cluster resources allowed
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'scheduling.k8s.io'
+      kind: PriorityClass
+
+  # Namespace resources allowed
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny all namespace-scoped resources from being deleted
+  namespaceResourceBlacklist: []
+
+  # Enable orphaned resource monitoring
+  orphanedResources:
+    warn: true
+
+  # Roles for project members
+  roles:
+    - name: admin
+      description: Admin access to callcenter-ai project
+      policies:
+        - p, proj:callcenter-ai:admin, applications, *, callcenter-ai/*, allow
+      groups:
+        - callcenter-ai-admins
+
+    - name: developer
+      description: Developer access to callcenter-ai project
+      policies:
+        - p, proj:callcenter-ai:developer, applications, get, callcenter-ai/*, allow
+        - p, proj:callcenter-ai:developer, applications, sync, callcenter-ai/dev-*, allow
+      groups:
+        - callcenter-ai-developers
+
+    - name: readonly
+      description: Read-only access to callcenter-ai project
+      policies:
+        - p, proj:callcenter-ai:readonly, applications, get, callcenter-ai/*, allow
+      groups:
+        - callcenter-ai-viewers
