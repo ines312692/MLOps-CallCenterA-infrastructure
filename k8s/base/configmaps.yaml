@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  labels:
+    app: callcenter-ai
+data:
+  # Agent Service Configuration
+  LOG_LEVEL: "INFO"
+  PROMETHEUS_PORT: "8003"
+  MAX_AGENT_ITERATIONS: "5"
+  AGENT_TIMEOUT: "30"
+  GROQ_MODEL: "llama-3.1-8b-instant"
+  GROQ_TEMPERATURE: "0.1"
+  GROQ_MAX_TOKENS: "1000"
+
+  # Service URLs
+  TFIDF_SERVICE_URL: "http://tfidf-service:8001"
+  TRANSFORMER_SERVICE_URL: "http://transformer-service:8002"
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+  REDIS_URL: "redis://redis:6379/0"
+
+  # Model Configuration
+  MODEL_PATH: "/app/model"
+
+  # Monitoring
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "8003"

@@ -1,0 +1,173 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfidf-service
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: http
+  selector:
+    app: callcenter-ai
+    component: tfidf-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tfidf-service
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: callcenter-ai
+      component: tfidf-service
+  template:
+    metadata:
+      labels:
+        app: callcenter-ai
+        component: tfidf-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: tfidf-service
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: model-loader
+          image: tfidf-service:latest
+          command: ['sh', '-c', 'python -c "import os; print(\"Models loaded\")"']
+          volumeMounts:
+            - name: models
+              mountPath: /app/model
+      containers:
+        - name: tfidf-service
+          image: tfidf-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8001
+              name: http
+              protocol: TCP
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: "http://mlflow:5000"
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: LOG_LEVEL
+            - name: MODEL_PATH
+              value: "/app/model"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "300m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: models
+              mountPath: /app/model
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: tfidf-models-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: tfidf-data-pvc
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tfidf-service
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tfidf-models-pvc
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tfidf-data-pvc
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tfidf-service
+  labels:
+    app: callcenter-ai
+    component: tfidf-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tfidf-service
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

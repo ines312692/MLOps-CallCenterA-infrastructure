@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: callcenter-dev
+
+resources:
+  - agent-service.yaml
+  - tfidf-service.yaml
+  - transformer-service.yaml
+  - mlflow.yaml
+  - postgres.yaml
+  - redis.yaml
+  - prometheus.yaml
+  - grafana.yaml
+  - configmaps.yaml
+  - secrets.yaml
+  - networkpolicies.yaml
+
+commonLabels:
+  app: callcenter-ai
+  managed-by: kustomize
+
+images:
+  - name: agent-service
+    newName: your-registry/agent-service
+    newTag: latest
+  - name: tfidf-service
+    newName: your-registry/tfidf-service
+    newTag: latest
+  - name: transformer-service
+    newName: your-registry/transformer-service
+    newTag: latest
+
+configMapGenerator:
+  - name: app-config
+    literals:
+      - LOG_LEVEL=INFO
+      - PROMETHEUS_PORT=8003
+      - MAX_AGENT_ITERATIONS=5
+      - AGENT_TIMEOUT=30
+
+secretGenerator:
+  - name: groq-api-key
+    literals:
+      - GROQ_API_KEY=change-me-in-overlay

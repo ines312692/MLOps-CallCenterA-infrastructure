@@ -1,0 +1,217 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transformer-service
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+      protocol: TCP
+      name: http
+  selector:
+    app: callcenter-ai
+    component: transformer-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformer-service
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: callcenter-ai
+      component: transformer-service
+  template:
+    metadata:
+      labels:
+        app: callcenter-ai
+        component: transformer-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8002"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: transformer-service
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: model-loader
+          image: transformer-service:latest
+          command: ['sh', '-c', 'python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; print(\"Models cached\")"']
+          volumeMounts:
+            - name: models
+              mountPath: /app/model
+            - name: huggingface-cache
+              mountPath: /home/user/.cache/huggingface
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "1000m"
+      containers:
+        - name: transformer-service
+          image: transformer-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8002
+              name: http
+              protocol: TCP
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: "http://mlflow:5000"
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: LOG_LEVEL
+            - name: MODEL_PATH
+              value: "/app/model"
+            - name: HF_HOME
+              value: "/home/user/.cache/huggingface"
+            - name: TRANSFORMERS_CACHE
+              value: "/home/user/.cache/huggingface/transformers"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: models
+              mountPath: /app/model
+            - name: data
+              mountPath: /app/data
+            - name: huggingface-cache
+              mountPath: /home/user/.cache/huggingface
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: transformer-models-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: transformer-data-pvc
+        - name: huggingface-cache
+          persistentVolumeClaim:
+            claimName: huggingface-cache-pvc
+      # Node affinity for GPU nodes (optional)
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: accelerator
+                    operator: In
+                    values:
+                      - gpu
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: transformer-service
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: transformer-models-pvc
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: transformer-data-pvc
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: huggingface-cache-pvc
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transformer-service
+  labels:
+    app: callcenter-ai
+    component: transformer-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transformer-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
