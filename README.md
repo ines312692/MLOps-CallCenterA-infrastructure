@@ -1,8 +1,6 @@
 ﻿#  Infrastructure Kubernetes & GitOps - MLOps CallCenter AI
 
 
-
-
 ###  Structure des Dossiers
 
 ```
@@ -100,32 +98,6 @@ make helm-install-prod
 make status
 ```
 
----
-
-##  Documentation
-
-### Documents Principaux (LISEZ EN PREMIER)
-
-|  Document |  Description |  Pour qui? |
-|------------|---------------|-------------|
-| **[INDEX.md](INDEX.md)** | Navigation et index complet | Tous |
-| **[LIVRAISON_FINALE.md](LIVRAISON_FINALE.md)** | Résumé complet en français | Tous |
-| **[COMPLETE_FILE_STRUCTURE.md](COMPLETE_FILE_STRUCTURE.md)** | Structure des 50+ fichiers | Développeurs |
-| **[INFRASTRUCTURE_SUMMARY.md](INFRASTRUCTURE_SUMMARY.md)** | Vue d'ensemble en anglais | Managers |
-
-### Guides Techniques
-
-| Guide |  Sujet |  Niveau |
-|---------|---------|---------|
-| **[infrastructure/SETUP_GUIDE.md](infrastructure/SETUP_GUIDE.md)** | Installation complète | Débutant |
-| **[infrastructure/GITOPS_WORKFLOW.md](infrastructure/GITOPS_WORKFLOW.md)** | Workflow GitOps | Intermédiaire |
-| **[infrastructure/ARCHITECTURE.md](infrastructure/ARCHITECTURE.md)** | Architecture & diagrammes | Intermédiaire |
-| **[infrastructure/TROUBLESHOOTING.md](infrastructure/TROUBLESHOOTING.md)** | Résolution problèmes | Tous |
-| **[infrastructure/INFRASTRUCTURE_OVERVIEW.md](infrastructure/INFRASTRUCTURE_OVERVIEW.md)** | Vue complète features | Avancé |
-| **[infrastructure/external-secrets/README.md](infrastructure/external-secrets/README.md)** | Gestion secrets | Avancé |
-
----
-
 ##  Architecture
 
 ### Services Déployés (8 Microservices)
@@ -217,7 +189,6 @@ Utilisez External Secrets Operator:
 - Azure Key Vault
 - HashiCorp Vault
 
-Voir: [`infrastructure/external-secrets/README.md`](infrastructure/external-secrets/README.md)
 
 ### Secrets Requis
 
@@ -264,7 +235,6 @@ Developer → Git Push → GitHub Actions → Build & Test → Docker Push
             Dev (Auto)           Prod (Manual)
 ```
 
-Pipeline complet inclus: [`.github/workflows/complete-pipeline.yml`](infrastructure/.github/workflows/complete-pipeline.yml)
 
 ---
 
@@ -298,17 +268,13 @@ make port-forward-dev
 
 ### En Cas de Problème
 
-1. **Consulter**: [`infrastructure/TROUBLESHOOTING.md`](infrastructure/TROUBLESHOOTING.md)
 2. **Vérifier logs**: `make logs ENV=prod SERVICE=agent-service`
 3. **Vérifier status**: `make status`
 4. **Vérifier events**: `make events ENV=prod`
 
 ### Ressources
 
--  **Email**: devops@example.com
--  **Slack**: #callcenter-ai-ops
-- **Wiki**: wiki.example.com/callcenter-ai
--  **GitHub Issues**: github.com/your-org/MLOps-CallCenterAI/issues
+-  **Email**: inestmimi1234@gmail.com
 
 ---
 
@@ -326,17 +292,6 @@ make port-forward-dev
 - [ ]  Runbooks créés
 - [ ]  DR plan testé
 
----
-
-##  Ressources d'Apprentissage
-
-### Documentation Officielle
-
-- [Kubernetes Docs](https://kubernetes.io/docs/)
-- [ArgoCD Docs](https://argo-cd.readthedocs.io/)
-- [Helm Docs](https://helm.sh/docs/)
-- [Prometheus Docs](https://prometheus.io/docs/)
-- [Grafana Docs](https://grafana.com/docs/)
 
 ### Cours Recommandés
 
@@ -346,18 +301,6 @@ make port-forward-dev
 
 ---
 
-##  Standards & Certifications
-
-Cette infrastructure suit:
-
- CNCF Cloud Native Best Practices  
- Kubernetes Best Practices  
- GitOps Principles  
- MLOps Level 2  
- DevSecOps Standards  
- SRE Principles  
-
----
 
 ##  Roadmap
 
@@ -378,46 +321,10 @@ Cette infrastructure suit:
 
 ---
 
-##  Contact
 
-Pour toute question:
-
--  **DevOps Team**: devops@example.com
--  **Slack**: #callcenter-ai-ops
--  **Documentation**: [`INDEX.md`](INDEX.md)
--  **Issues**: GitHub Issues
-
----
-
-##  Félicitations!
-
-Vous disposez maintenant d'une infrastructure **enterprise-grade** et **production-ready** pour votre projet MLOps CallCenter AI!
-
-### Pourquoi Cette Infrastructure est Exceptionnelle
-
- **Complète** - Tout est inclus, rien à ajouter  
- **Professionnelle** - Standards industrie  
- **Documentée** - 3,000+ lignes de docs  
- **Testée** - Best practices éprouvées  
- **Sécurisée** - Security-first approach  
- **Scalable** - Auto-scaling inclus  
- **Maintenable** - GitOps workflow  
- **Observable** - Monitoring complet  
-
----
-
-**Version**: 1.0.0  
-**Status**:  100% Production Ready  
-**Date**: Novembre 2025  
-**Auteur**: MLOps Infrastructure Team  
-
-**Happy Deploying! **
-
----
 
 > "The best infrastructure is the one you don't have to think about."  
 > - Anonymous DevOps Engineer
 
 
-**Prêt à déployer? Commencez par [`LIVRAISON_FINALE.md`](LIVRAISON_FINALE.md)!**
 
